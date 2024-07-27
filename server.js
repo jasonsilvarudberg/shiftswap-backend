@@ -25,24 +25,40 @@ mongoose.connect(mongoURI, {
 
 // Define Schema and Model
 const residentSchema = new mongoose.Schema({
-  name: String,
-  year: String,
-  datesSeeking: [String],
-  datesAvailable: [String],
+  name: { type: String, required: true },
+  year: { type: String, required: true },
+  datesSeeking: { type: [String], required: true },
+  datesAvailable: { type: [String], required: true },
 });
 
 const Resident = mongoose.model('Resident', residentSchema);
 
 // Routes
 app.post('/residents', async (req, res) => {
-  const resident = new Resident(req.body);
-  await resident.save();
-  res.send(resident);
+  try {
+    const { name, year, datesSeeking, datesAvailable } = req.body;
+    console.log('Request Body:', req.body);
+    
+    if (!name || !year || !Array.isArray(datesSeeking) || !Array.isArray(datesAvailable)) {
+      return res.status(400).send({ error: 'Bad Request', message: 'All fields are required and must be correctly formatted.' });
+    }
+    
+    const resident = new Resident({ name, year, datesSeeking, datesAvailable });
+    await resident.save();
+    res.status(201).send(resident);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(400).send({ error: 'Bad Request', message: error.message });
+  }
 });
 
 app.get('/residents', async (req, res) => {
-  const residents = await Resident.find();
-  res.send(residents);
+  try {
+    const residents = await Resident.find();
+    res.status(200).send(residents);
+  } catch (error) {
+    res.status(500).send(error);
+  }
 });
 
 app.listen(port, () => {
