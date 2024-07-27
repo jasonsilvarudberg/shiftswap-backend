@@ -15,10 +15,8 @@ const mongoURI = 'mongodb+srv://jasonantoniosilva2:ic1azdoNT6caAEsF@cluster0.pkx
 mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  ssl: true,
-  sslValidate: true,
-  tlsAllowInvalidCertificates: false,
-  tlsAllowInvalidHostnames: false,
+  tls: true,
+  tlsInsecure: false,
 }).then(() => {
   console.log('Connected to MongoDB');
 }).catch((err) => {
