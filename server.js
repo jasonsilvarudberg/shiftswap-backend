@@ -61,6 +61,21 @@ app.get('/residents', async (req, res) => {
   }
 });
 
+// New endpoint to delete entries by name
+app.delete('/residents', async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).send({ error: 'Bad Request', message: 'Name is required' });
+    }
+    const result = await Resident.deleteMany({ name });
+    res.status(200).send({ message: 'Entries deleted', result });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send({ error: 'Internal Server Error', message: error.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
