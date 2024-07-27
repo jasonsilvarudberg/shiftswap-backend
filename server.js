@@ -11,10 +11,18 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // Connect to MongoDB
-const mongoURI = process.env.MONGODB_URI || 'your_fallback_mongo_uri';
+const mongoURI = 'mongodb+srv://jasonantoniosilva2:ic1azdoNT6caAEsF@cluster0.pkxaae9.mongodb.net/resident-shift-swap?retryWrites=true&w=majority&appName=Cluster0';
 mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  ssl: true,
+  sslValidate: true,
+  tlsAllowInvalidCertificates: false,
+  tlsAllowInvalidHostnames: false,
+}).then(() => {
+  console.log('Connected to MongoDB');
+}).catch((err) => {
+  console.error('Error connecting to MongoDB:', err);
 });
 
 // Define Schema and Model
