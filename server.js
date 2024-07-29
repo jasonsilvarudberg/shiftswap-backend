@@ -28,8 +28,8 @@ mongoose.connect(mongoURI, {
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'your-email@gmail.com',  // Replace with your email
-    pass: 'your-email-password'    // Replace with your email password
+    user: 'ucsfimshiftswap@gmail.com',  // Replace with your email
+    pass: '2e@3+:3Q'r2.'    // Replace with your email password
   }
 });
 
@@ -109,7 +109,7 @@ app.delete('/residents', async (req, res) => {
 app.post('/send-email', async (req, res) => {
   const { email, message } = req.body;
   const mailOptions = {
-    from: 'your-email@gmail.com', // Replace with your email
+    from: 'ucsfimshiftswap@gmail.com', // Replace with your email
     to: email,
     subject: 'Shift Swap Match',
     text: message
@@ -130,7 +130,7 @@ app.listen(port, () => {
 
 async function sendEmail(email, message) {
   const mailOptions = {
-    from: 'your-email@gmail.com', // Replace with your email
+    from: 'ucsfimshiftswap@gmail.com', // Replace with your email
     to: email,
     subject: 'Shift Swap Match',
     text: message
