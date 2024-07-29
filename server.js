@@ -29,7 +29,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'ucsfimshiftswap@gmail.com',  // Replace with your email
-    pass: 'PkO0N7S7nyp2'    // Replace with your email password
+    pass: 'nebx pryk fodn mdtx'    // Replace with your email password
   }
 });
 
