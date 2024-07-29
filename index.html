@@ -1,59 +1,271 @@
-<script>
-    async function submitForm() {
-        const name = document.getElementById('name').value;
-        const year = document.getElementById('year').value;
-        const datesSeeking = document.getElementById('datesSeeking').value.split(',').map(date => date.trim());
-        const datesAvailable = document.getElementById('datesAvailable').value.split(',').map(date => date.trim());
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Shift Swap App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 10px;
+        }
+        input, textarea {
+            padding: 8px;
+            margin-top: 5px;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        a {
+            margin-top: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .match {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .match-found {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        .match-not-found {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="passwordContainer">
+        <h1>Password Required</h1>
+        <form id="passwordForm">
+            <label for="password">Enter Password:</label>
+            <input type="password" id="password" required>
+            <button type="button" onclick="checkPassword()">Submit</button>
+        </form>
+        <p id="errorMessage" style="color: red; display: none;">Incorrect password. Please try again.</p>
+    </div>
+    <div class="container" id="contentContainer" style="display: none;">
+        <h1>Resident Shift Swap</h1>
+        <form id="swapForm">
+            <label for="name">Name:</label>
+            <input type="text" id="name" required>
+            <label for="email">Email:</label>
+            <input type="email" id="email" required>
+            <label for="year">Year in Training:</label>
+            <input type="text" id="year" required>
+            <label for="datesSeeking">Dates Seeking Coverage (comma separated, include ranges as "mm/dd/yyyy-mm/dd/yyyy"):</label>
+            <textarea id="datesSeeking" required></textarea>
+            <label for="datesAvailable">Dates Available to Cover (comma separated, include ranges as "mm/dd/yyyy-mm/dd/yyyy"):</label>
+            <textarea id="datesAvailable" required></textarea>
+            <button type="button" onclick="submitForm()">Submit</button>
+            <button type="button" onclick="clearEntries()">Clear Entries</button>
+        </form>
+        <a href="residents.html">Show All Residents</a>
+        <div id="matchResult" class="match" style="display:none;">
+            <h2 id="matchTitle"></h2>
+            <p id="matchText"></p>
+        </div>
+    </div>
+    <script>
+        const PASSWORD = "becky-b";
 
-        const resident = {
-            name,
-            year,
-            datesSeeking,
-            datesAvailable
-        };
-
-        const response = await fetch('https://shiftswap-backend.onrender.com/residents', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(resident)
-        });
-
-        const result = await response.json();
-        findMatch(result);
-    }
-
-    async function findMatch(newResident) {
-        const response = await fetch('https://shiftswap-backend.onrender.com/residents');
-        const residents = await response.json();
-
-        let match = null;
-
-        for (let i = 0; i < residents.length; i++) {
-            const res = residents[i];
-            if (res._id !== newResident._id) {
-                const seekingOverlap = newResident.datesSeeking.some(date => res.datesAvailable.includes(date));
-                const availableOverlap = newResident.datesAvailable.some(date => res.datesSeeking.includes(date));
-
-                if (seekingOverlap && availableOverlap) {
-                    match = res;
-                    break;
-                }
+        function checkPassword() {
+            const enteredPassword = document.getElementById('password').value;
+            if (enteredPassword === PASSWORD) {
+                document.getElementById('passwordContainer').style.display = 'none';
+                document.getElementById('contentContainer').style.display = 'block';
+            } else {
+                document.getElementById('errorMessage').style.display = 'block';
             }
         }
 
-        const matchResult = document.getElementById('matchResult');
-        const matchText = document.getElementById('matchText');
+        function parseDates(datesInput) {
+            const dates = datesInput.split(',').map(date => date.trim());
+            const parsedDates = [];
 
-        if (match) {
-            matchText.innerHTML = `Match found with ${match.name} (${match.year})!<br>
-            Dates you can cover for them: ${newResident.datesAvailable.filter(date => match.datesSeeking.includes(date)).join(', ')}<br>
-            Dates they can cover for you: ${newResident.datesSeeking.filter(date => match.datesAvailable.includes(date)).join(', ')}`;
-            matchResult.style.display = 'block';
-        } else {
-            matchText.innerHTML = 'No match found. Please try again later.';
-            matchResult.style.display = 'block';
+            dates.forEach(date => {
+                if (date.includes('-')) {
+                    const [start, end] = date.split('-').map(d => new Date(d.trim()));
+                    let currentDate = new Date(start);
+                    while (currentDate <= end) {
+                        parsedDates.push(currentDate.toISOString().split('T')[0]);
+                        currentDate.setDate(currentDate.getDate() + 1);
+                    }
+                } else {
+                    parsedDates.push(new Date(date).toISOString().split('T')[0]);
+                }
+            });
+
+            return parsedDates;
         }
-    }
-</script>
+
+        async function submitForm() {
+            console.log('Submit button clicked');
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const year = document.getElementById('year').value;
+            const datesSeekingInput = document.getElementById('datesSeeking').value;
+            const datesAvailableInput = document.getElementById('datesAvailable').value;
+
+            const datesSeeking = parseDates(datesSeekingInput);
+            const datesAvailable = parseDates(datesAvailableInput);
+
+            const resident = {
+                name,
+                email,
+                year,
+                datesSeeking,
+                datesAvailable
+            };
+
+            try {
+                const response = await fetch('https://shiftswap-backend.onrender.com/residents', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(resident)
+                });
+
+                console.log('Fetch response:', response);
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const result = await response.json();
+                console.log('Fetch result:', result);
+                findMatch(result);
+            } catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+            }
+        }
+
+        async function findMatch(newResident) {
+            try {
+                const response = await fetch('https://shiftswap-backend.onrender.com/residents');
+                const residents = await response.json();
+
+                let match = null;
+
+                for (let i = 0; i < residents.length; i++) {
+                    const res = residents[i];
+                    if (res._id !== newResident._id) {
+                        const seekingOverlap = newResident.datesSeeking.some(date => res.datesAvailable.includes(date));
+                        const availableOverlap = newResident.datesAvailable.some(date => res.datesSeeking.includes(date));
+
+                        if (seekingOverlap && availableOverlap) {
+                            match = res;
+                            break;
+                        }
+                    }
+                }
+
+                const matchResult = document.getElementById('matchResult');
+                const matchTitle = document.getElementById('matchTitle');
+                const matchText = document.getElementById('matchText');
+
+                if (match) {
+                    matchTitle.textContent = 'Match Found!';
+                    matchText.innerHTML = `Match found with ${match.name} (${match.year})!<br>
+                    Dates you can cover for them: ${newResident.datesAvailable.filter(date => match.datesSeeking.includes(date)).join(', ')}<br>
+                    Dates they can cover for you: ${newResident.datesSeeking.filter(date => match.datesAvailable.includes(date)).join(', ')}`;
+                    matchResult.classList.remove('match-not-found');
+                    matchResult.classList.add('match-found');
+                    matchResult.style.display = 'block';
+                    
+                    // Send email to both users
+                    await sendEmail(newResident.email, `Match found with ${match.name} (${match.year})!\nDates you can cover for them: ${newResident.datesAvailable.filter(date => match.datesSeeking.includes(date)).join(', ')}\nDates they can cover for you: ${newResident.datesSeeking.filter(date => match.datesAvailable.includes(date)).join(', ')}`);
+                    await sendEmail(match.email, `Match found with ${newResident.name} (${newResident.year})!\nDates you can cover for them: ${match.datesAvailable.filter(date => newResident.datesSeeking.includes(date)).join(', ')}\nDates they can cover for you: ${match.datesSeeking.filter(date => newResident.datesAvailable.includes(date)).join(', ')}`);
+                } else {
+                    matchTitle.textContent = 'No Match Found!';
+                    matchText.textContent = 'No match found. Please try again later.';
+                    matchResult.classList.remove('match-found');
+                    matchResult.classList.add('match-not-found');
+                    matchResult.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+            }
+        }
+
+        async function sendEmail(email, message) {
+            try {
+                await fetch('https://shiftswap-backend.onrender.com/send-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, message })
+                });
+            } catch (error) {
+                console.error('There was a problem sending the email:', error);
+            }
+        }
+
+        async function clearEntries() {
+            console.log('Clear button clicked');
+            const name = document.getElementById('name').value;
+
+            try {
+                const response = await fetch('https://shiftswap-backend.onrender.com/residents', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name })
+                });
+
+                console.log('Fetch response:', response);
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const result = await response.json();
+                console.log('Entries cleared:', result);
+                alert('Entries cleared successfully');
+            } catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+            }
+        }
+    </script>
+</body>
+</html>
