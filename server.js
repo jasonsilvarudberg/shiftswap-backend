@@ -29,7 +29,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'ucsfimshiftswap@gmail.com',  // Replace with your email
-    pass: 'nebx pryk fodn mdtx'    // Replace with your email password
+    pass: 'nebx pryk fodn mdtx'      // Replace with your app password or Gmail password if using less secure app access
   }
 });
 
@@ -62,7 +62,7 @@ app.post('/residents', async (req, res) => {
     const residents = await Resident.find();
     let match = null;
     for (let res of residents) {
-      if (res._id !== resident._id) {
+      if (res._id.toString() !== resident._id.toString()) {
         const seekingOverlap = datesSeeking.some(date => res.datesAvailable.includes(date));
         const availableOverlap = datesAvailable.some(date => res.datesSeeking.includes(date));
         if (seekingOverlap && availableOverlap) {
@@ -73,9 +73,10 @@ app.post('/residents', async (req, res) => {
     }
     
     if (match) {
-      const matchMessage = `Match found with ${match.name} (${match.year})! Dates you can cover for them: ${datesAvailable.filter(date => match.datesSeeking.includes(date)).join(', ')}. Dates they can cover for you: ${datesSeeking.filter(date => match.datesAvailable.includes(date)).join(', ')}`;
+      const matchMessage = `Match found with ${match.name} (${match.year})!\nDates you can cover for them: ${datesAvailable.filter(date => match.datesSeeking.includes(date)).join(', ')}\nDates they can cover for you: ${datesSeeking.filter(date => match.datesAvailable.includes(date)).join(', ')}`;
+      
       await sendEmail(resident.email, matchMessage);
-      await sendEmail(match.email, matchMessage);
+      await sendEmail(match.email, `Match found with ${resident.name} (${resident.year})!\nDates you can cover for them: ${match.datesAvailable.filter(date => datesSeeking.includes(date)).join(', ')}\nDates they can cover for you: ${match.datesSeeking.filter(date => datesAvailable.includes(date)).join(', ')}`);
     }
   } catch (error) {
     console.error('Error:', error);
